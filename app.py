@@ -1,51 +1,35 @@
 from flask import Flask, request
-import requests
 import os
+import requests
 
 app = Flask(__name__)
 
-VERIFY_TOKEN = "capetownbot123"
-ACCESS_TOKEN = os.getenv("TOKEN")
-PHONE_ID = os.getenv("PHONE_ID")
+VERIFY_TOKEN = "charltommiebot"  # Must match what you typed in Meta
+TOKEN = os.environ.get("TOKEN")
+PHONE_ID = os.environ.get("PHONE_ID")
 
-@app.route('/')
-def home():
-    return 'Cape Town Bot is running!'
-
-@app.route('/webhook', methods=['GET', 'POST'])
-def webhook():
-    if request.method == 'GET':
-        if request.args.get('hub.verify_token') == VERIFY_TOKEN:
-            return request.args.get('hub.challenge')
-        return 'Invalid verify token', 403
+@app.route("/webhook", methods=["GET"])
+def verify():
+    mode = request.args.get("hub.mode")
+    token = request.args.get("hub.verify_token")
+    challenge = request.args.get("hub.challenge")
     
-    if request.method == 'POST':
-        data = request.get_json()
-        try:
-            if data['entry'][0]['changes'][0]['value'].get('messages'):
-                message = data['entry'][0]['changes'][0]['value']['messages'][0]
-                from_number = message['from']
-                msg_body = message['text']['body'].lower()
-                
-                if msg_body == '1':
-                    reply = "Our prices:\nBasic: R200\nPro: R500"
-                elif msg_body == '2':
-                    reply = "Hours:\nMon-Fri: 9am-5pm SAST\nSat: 10am-2pm"
-                elif msg_body == '3':
-                    reply = "A human will reply soon. Call: +27 XX XXX XXXX"
-                else:
-                    reply = "Hi from Cape Town Bot! 👋\n\nReply:\n1 for Prices\n2 for Hours\n3 for Human"
-                
-                send_whatsapp_message(from_number, reply)
-        except:
-            pass
-        return 'OK', 200
+    if mode and token:
+        if mode == "subscribe" and token == VERIFY_TOKEN:
+            return challenge, 200
+        else:
+            return "Forbidden", 403
+    return "Bad Request", 400
 
-def send_whatsapp_message(to, message):
-    url = f"https://graph.facebook.com/v25.0/{PHONE_ID}/messages"
-    headers = {"Authorization": f"Bearer {ACCESS_TOKEN}", "Content-Type": "application/json"}
-    data = {"messaging_product": "whatsapp", "to": to, "type": "text", "text": {"body": message}}
-    requests.post(url, headers=headers, json=data)
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    # Your bot logic goes here
+    return "OK", 200
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route("/", methods=["GET"])
+def home():
+    return "Bot is live", 200
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
