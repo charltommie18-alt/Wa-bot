@@ -4,7 +4,7 @@ import requests
 
 app = Flask(__name__)
 
-VERIFY_TOKEN = "charltommiebot"  # Must match what you typed in Meta
+VERIFY_TOKEN = "capetownbot123"  # Must match what you typed in Meta
 TOKEN = os.environ.get("TOKEN")
 PHONE_ID = os.environ.get("PHONE_ID")
 
