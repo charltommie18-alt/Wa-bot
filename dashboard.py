@@ -7,8 +7,14 @@ supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_KEY")
 
 if not supabase_url or not supabase_key:
-    st.error("Missing Supabase Environment Variables!")
+    st.error("Missing Supabase Environment Variables")
     st.stop()
+
+# DEBUG: Show what's being read
+st.write(f"URL: {supabase_url}")
+st.write(f"Key starts with: {supabase_key[:20]}...")
+
+
 
 supabase = create_client(supabase_url, supabase_key)
 
