@@ -1,79 +1,74 @@
 import streamlit as st
-from supabase import create_client
 import pandas as pd
 import openai
-import os
+import httpx
 
 st.set_page_config(page_title="WaBot Dashboard", layout="wide")
 st.title("🤖 WaBot Training Dashboard")
 
-# --- Load Secrets ---
+# --- Secrets ---
+SUPABASE_URL = str(st.secrets["SUPABASE_URL"]).strip().strip('"').strip("'").rstrip("/")
+SUPABASE_KEY = str(st.secrets["SUPABASE_KEY"]).strip().strip('"').strip("'")
+OPENAI_KEY = str(st.secrets["OPENAI_API_KEY"]).strip().strip('"').strip("'")
+
+headers = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json"
+}
+
+# --- Test Connection ---
 try:
-    SUPABASE_URL = str(st.secrets["SUPABASE_URL"]).strip().strip('"').strip("'")
-    SUPABASE_KEY = str(st.secrets["SUPABASE_KEY"]).strip().strip('"').strip("'")
-    OPENAI_KEY = str(st.secrets["OPENAI_API_KEY"]).strip().strip('"').strip("'")
+    r = httpx.get(f"{SUPABASE_URL}/rest/v1/training_data?select=*&limit=1", headers=headers, timeout=10)
+    if r.status_code in [200, 206]:
+        st.success(f"✅ Connected to Supabase! Key length {len(SUPABASE_KEY)} works!")
+    else:
+        st.error(f"❌ Supabase returned {r.status_code}: {r.text}")
+        st.info(f"URL: {SUPABASE_URL}")
+        st.info(f"KEY: {SUPABASE_KEY[:20]}... length {len(SUPABASE_KEY)}")
+        st.stop()
 except Exception as e:
-    st.error(f"❌ Secrets missing in Streamlit. Go to Settings -> Secrets. Error: {e}")
+    st.error(f"❌ Connection failed: {e}")
     st.stop()
-
-# --- Debug ---
-if not SUPABASE_URL.startswith("https://"):
-    st.error(f"❌ SUPABASE_URL is wrong! You put: {SUPABASE_URL[:20]}... It must start with https://")
-    st.stop()
-if not SUPABASE_KEY.startswith("sb_"):
-    st.error(f"❌ SUPABASE_KEY is wrong! You put: {SUPABASE_KEY[:20]}... It must start with sb_secret_")
-    st.stop()
-
-# --- Connect ---
-try:
-    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-    # test connection
-    supabase.table("training_data").select("*").limit(1).execute()
-    st.success("✅ Connected to Supabase!")
-except Exception as e:
-    st.error(f"❌ Failed to connect to Supabase: {e}")
-    st.info(f"URL you sent: {SUPABASE_URL}")
-    st.info(f"KEY you sent: {SUPABASE_KEY[:20]}... (length {len(SUPABASE_KEY)})")
-    st.stop()
-
-# --- Sidebar ---
-st.sidebar.header("Settings")
-openai.api_key = OPENAI_KEY
 
 # --- Tabs ---
-tab1, tab2, tab3 = st.tabs(["📚 View Training Data", "➕ Add Training Data", "🧪 Test AI"])
+tab1, tab2, tab3 = st.tabs(["📚 View Data", "➕ Add Data", "🧪 Test AI"])
 
 with tab1:
     st.subheader("Current Training Data")
     try:
-        data = supabase.table("training_data").select("*").execute()
-        df = pd.DataFrame(data.data)
+        r = httpx.get(f"{SUPABASE_URL}/rest/v1/training_data?select=*&order=id.desc", headers=headers, timeout=10)
+        data = r.json()
+        df = pd.DataFrame(data)
         if df.empty:
             st.info("No data yet. Add some in Tab 2.")
         else:
             st.dataframe(df, use_container_width=True)
             st.write(f"Total rows: {len(df)}")
     except Exception as e:
-        st.error(f"Error loading data: {e}")
+        st.error(f"Error: {e}")
 
 with tab2:
     st.subheader("Add New Q&A")
     with st.form("add_form"):
-        question = st.text_input("User Question (what customer will ask)")
-        answer = st.text_area("Bot Answer (how bot should reply)")
+        question = st.text_input("User Question")
+        answer = st.text_area("Bot Answer")
         category = st.selectbox("Category", ["general", "pricing", "support", "product", "other"])
         submit = st.form_submit_button("Add to Database")
         if submit:
             if not question or not answer:
-                st.warning("Fill both question and answer")
+                st.warning("Fill both fields")
             else:
                 try:
-                    supabase.table("training_data").insert({
+                    r = httpx.post(f"{SUPABASE_URL}/rest/v1/training_data", headers=headers, json={
                         "question": question,
                         "answer": answer,
                         "category": category
-                    }).execute()
-                    st.success("✅ Added!")
+                    }, timeout=10)
+                    if r.status_code in [200, 201]:
+                        st.success("✅ Added!")
+                    else:
+                        st.error(f"Failed {r.status_code}: {r.text}")
                 except Exception as e:
                     st.error(f"Failed: {e}")
 
@@ -85,11 +80,10 @@ with tab3:
             st.warning("Type a question")
         else:
             try:
-                # Get training data
-                training = supabase.table("training_data").select("*").execute()
-                context = "\n".join([f"Q: {r['question']}\nA: {r['answer']}" for r in training.data[:20]])
-
-                prompt = f"You are WaBot. Use this training data to answer:\n{context}\n\nUser asks: {user_q}\nAnswer helpfully:"
+                r = httpx.get(f"{SUPABASE_URL}/rest/v1/training_data?select=question,answer&limit=20", headers=headers, timeout=10)
+                training = r.json()
+                context = "\n".join([f"Q: {x['question']}\nA: {x['answer']}" for x in training])
+                prompt = f"You are WaBot. Use this training data:\n{context}\n\nUser asks: {user_q}\nAnswer helpfully:"
 
                 client = openai.OpenAI(api_key=OPENAI_KEY)
                 resp = client.chat.completions.create(
