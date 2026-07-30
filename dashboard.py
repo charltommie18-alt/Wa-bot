@@ -1,87 +1,101 @@
 import streamlit as st
-import os
+from supabase import create_client
 import pandas as pd
+import openai
+import os
 
-# --- 1. LOAD KEYS (Works on both Streamlit Cloud and Render) ---
+st.set_page_config(page_title="WaBot Dashboard", layout="wide")
+st.title("🤖 WaBot Training Dashboard")
+
+# --- Load Secrets ---
 try:
-    # On Streamlit Cloud
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-    OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-except:
-    # On Render / Local
-    SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-    SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
-    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-
-# Clean keys (remove quotes/spaces that break Supabase)
-SUPABASE_URL = str(SUPABASE_URL).strip().replace('"','').replace("'","")
-SUPABASE_KEY = str(SUPABASE_KEY).strip().replace('"','').replace("'","")
-OPENAI_API_KEY = str(OPENAI_API_KEY).strip().replace('"','').replace("'","")
-
-# --- 2. CONNECT TO SUPABASE ---
-from supabase import create_client, Client
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    st.error("❌ SUPABASE keys are missing! Go to Streamlit Settings -> Secrets and add them.")
+    SUPABASE_URL = str(st.secrets["SUPABASE_URL"]).strip().strip('"').strip("'")
+    SUPABASE_KEY = str(st.secrets["SUPABASE_KEY"]).strip().strip('"').strip("'")
+    OPENAI_KEY = str(st.secrets["OPENAI_API_KEY"]).strip().strip('"').strip("'")
+except Exception as e:
+    st.error(f"❌ Secrets missing in Streamlit. Go to Settings -> Secrets. Error: {e}")
     st.stop()
 
+# --- Debug ---
+if not SUPABASE_URL.startswith("https://"):
+    st.error(f"❌ SUPABASE_URL is wrong! You put: {SUPABASE_URL[:20]}... It must start with https://")
+    st.stop()
+if not SUPABASE_KEY.startswith("sb_"):
+    st.error(f"❌ SUPABASE_KEY is wrong! You put: {SUPABASE_KEY[:20]}... It must start with sb_secret_")
+    st.stop()
+
+# --- Connect ---
 try:
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    # test connection
+    supabase.table("training_data").select("*").limit(1).execute()
+    st.success("✅ Connected to Supabase!")
 except Exception as e:
     st.error(f"❌ Failed to connect to Supabase: {e}")
-    st.info(f"URL you sent: {SUPABASE_URL[:30]}...")
+    st.info(f"URL you sent: {SUPABASE_URL}")
+    st.info(f"KEY you sent: {SUPABASE_KEY[:20]}... (length {len(SUPABASE_KEY)})")
     st.stop()
 
-# --- 3. PAGE UI ---
-st.set_page_config(page_title="WaBot Dashboard", page_icon="🤖", layout="wide")
-st.title("🤖 WaBot Training Dashboard")
-st.success("✅ Connected to Supabase!")
+# --- Sidebar ---
+st.sidebar.header("Settings")
+openai.api_key = OPENAI_KEY
 
-# --- 4. TABS ---
-tab1, tab2, tab3 = st.tabs(["📚 View Training Data", "➕ Add New FAQ", "⚙️ Settings"])
+# --- Tabs ---
+tab1, tab2, tab3 = st.tabs(["📚 View Training Data", "➕ Add Training Data", "🧪 Test AI"])
 
 with tab1:
-    st.header("Current Training Data")
+    st.subheader("Current Training Data")
     try:
-        response = supabase.table("training_data").select("*").execute()
-        data = response.data
-        if data:
-            df = pd.DataFrame(data)
+        data = supabase.table("training_data").select("*").execute()
+        df = pd.DataFrame(data.data)
+        if df.empty:
+            st.info("No data yet. Add some in Tab 2.")
+        else:
             st.dataframe(df, use_container_width=True)
             st.write(f"Total rows: {len(df)}")
-        else:
-            st.info("No training data yet. Add some in the next tab.")
     except Exception as e:
         st.error(f"Error loading data: {e}")
-        st.info("Make sure you have a table named 'training_data' in Supabase with columns: question, answer")
 
 with tab2:
-    st.header("Add New Training")
+    st.subheader("Add New Q&A")
     with st.form("add_form"):
-        question = st.text_input("Customer Question")
-        answer = st.text_area("Bot Answer")
-        submitted = st.form_submit_button("Add to Bot")
-        if submitted:
-            if question and answer:
-                try:
-                    supabase.table("training_data").insert({"question": question, "answer": answer}).execute()
-                    st.success(f"✅ Added: {question}")
-                except Exception as e:
-                    st.error(f"Failed to add: {e}")
+        question = st.text_input("User Question (what customer will ask)")
+        answer = st.text_area("Bot Answer (how bot should reply)")
+        category = st.selectbox("Category", ["general", "pricing", "support", "product", "other"])
+        submit = st.form_submit_button("Add to Database")
+        if submit:
+            if not question or not answer:
+                st.warning("Fill both question and answer")
             else:
-                st.warning("Please fill both fields")
+                try:
+                    supabase.table("training_data").insert({
+                        "question": question,
+                        "answer": answer,
+                        "category": category
+                    }).execute()
+                    st.success("✅ Added!")
+                except Exception as e:
+                    st.error(f"Failed: {e}")
 
 with tab3:
-    st.header("Connection Status")
-    st.write(f"**Supabase URL:** {SUPABASE_URL}")
-    st.write(f"**Supabase Key:** {SUPABASE_KEY[:10]}...{SUPABASE_KEY[-4:]}")
-    st.write(f"**OpenAI Key:** {OPENAI_API_KEY[:10]}...{OPENAI_API_KEY[-4:]}")
-    if st.button("Test OpenAI"):
-        try:
-            from openai import OpenAI
-            client = OpenAI(api_key=OPENAI_API_KEY)
-            res = client.chat.completions.create(model="gpt-3.5-turbo", messages=[{"role":"user","content":"Say hi"}])
-            st.success(f"OpenAI Works: {res.choices[0].message.content}")
-        except Exception as e:
-            st.error(f"OpenAI Error: {e}")
+    st.subheader("Test Your Bot")
+    user_q = st.text_input("Ask something like a customer")
+    if st.button("Ask AI"):
+        if not user_q:
+            st.warning("Type a question")
+        else:
+            try:
+                # Get training data
+                training = supabase.table("training_data").select("*").execute()
+                context = "\n".join([f"Q: {r['question']}\nA: {r['answer']}" for r in training.data[:20]])
+
+                prompt = f"You are WaBot. Use this training data to answer:\n{context}\n\nUser asks: {user_q}\nAnswer helpfully:"
+
+                client = openai.OpenAI(api_key=OPENAI_KEY)
+                resp = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                st.success(resp.choices[0].message.content)
+            except Exception as e:
+                st.error(f"OpenAI Error: {e}")
