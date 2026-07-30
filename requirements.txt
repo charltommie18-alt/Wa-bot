@@ -1,7 +1,6 @@
 streamlit
-supabase==2.11.0
 openai
 pandas
+httpx
 rich==13.7.1
 markdown-it-py==3.0.0
-httpx==0.27.2
