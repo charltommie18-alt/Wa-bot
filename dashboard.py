@@ -2,7 +2,9 @@ import streamlit as st
 import os
 from supabase import create_client
 
-# 1. Connect to Supabase using Environment Variables
+st.set_page_config(page_title="WaBot Admin", layout="wide")
+
+# 1. Connect to Supabase using Environment
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_KEY")
 
@@ -10,11 +12,7 @@ if not supabase_url or not supabase_key:
     st.error("Missing Supabase Environment Variables")
     st.stop()
 
-# DEBUG: Show what's being read
-st.write(f"URL: {supabase_url}")
-st.write(f"Key starts with: {supabase_key[:20]}...")
-
-
+supabase = create_client(supabase_url, supabase_key)
 
 supabase = create_client(supabase_url, supabase_key)
 
