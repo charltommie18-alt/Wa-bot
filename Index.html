@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HowzitBot - Your AI Staff on WhatsApp</title>
+<style>
+body{font-family:sans-serif;margin:0;background:#f6fff8;color:#0B141A}
+.top{background:#0B141A;color:white;text-align:center;padding:10px;font-size:13px}
+.top b{color:#25D366}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;background:white;position:sticky;top:0;border-bottom:1px solid #eee}
+.logo{font-weight:800;font-size:18px}
+.btn{background:#25D366;color:#0B141A;padding:12px 22px;border-radius:999px;text-decoration:none;font-weight:700;display:inline-block}
+.hero{max-width:1000px;margin:auto;padding:40px 20px;display:grid;gap:30px}
+h1{font-size:36px;line-height:1;margin:0}
+.card{border:1px solid #ddd;border-radius:20px;padding:20px;background:white}
+.price{font-size:28px;font-weight:800}
+.float{position:fixed;bottom:20px;right:20px;background:#25D366;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,0.3);font-size:28px;text-decoration:none}
+input{width:100%;padding:14px;border-radius:999px;border:1px solid #ccc;margin-top:8px;font-size:14px;box-sizing:border-box}
+</style>
+</head>
+<body>
+<div class="top">🎉 Launch Special - <b>50 FREE AI replies</b> to start!</div>
+<div class="nav">
+<div class="logo">HowzitBot</div>
+<a class="btn" href="https://wa.me/15551436700?text=Hi%20HowzitBot%20I%20want%2050%20free%20credits" style="padding:8px 16px;font-size:13px">Talk to bot</a>
+</div>
+
+<div class="hero">
+<div>
+<h1>Tired of answering the same WhatsApps?</h1>
+<p style="color:#666;font-size:17px;line-height:1.5">HowzitBot trains on YOUR business and answers customers automatically on WhatsApp. Your AI staff, 24/7.</p>
+<div style="background:#e8fff0;border-radius:12px;padding:12px;font-size:13px">✅ 50 free credits included • Bot: <b>+1 (555) 143-6700</b></div>
+<br>
+<a class="btn" href="#pricing">Get HowzitBot - R299/mo</a>
+</div>
+
+<div id="pricing" style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
+<div class="card">
+<h3>🇿🇦 South Africa</h3>
+<div class="price">R299<span style="font-size:14px">/mo</span></div>
+<p style="font-size:12px;color:#666">~$16 USD via PayPal. PayPal SA receives in USD, auto-converts.</p>
+<ul style="font-size:13px;line-height:2">
+<li>50 free credits</li>
+<li>1000 replies/mo</li>
+<li>Trains on your business</li>
+</ul>
+<input id="emailZA" placeholder="Your email">
+<input id="bizZA" placeholder="Business name">
+<br><br>
+<a class="btn" href="#" onclick="goPay('ZA')">Continue to PayPal - R299</a>
+</div>
+
+<div class="card" style="border:2px solid #25D366">
+<h3>🌍 International</h3>
+<div class="price">$19<span style="font-size:14px">/mo</span></div>
+<p style="font-size:12px;color:#666">USD via PayPal</p>
+<ul style="font-size:13px;line-height:2">
+<li>50 free credits</li>
+<li>1000 replies/mo</li>
+<li>Global WhatsApp</li>
+</ul>
+<input id="emailUS" placeholder="Your email">
+<input id="bizUS" placeholder="Business name">
+<br><br>
+<a class="btn" href="#" onclick="goPay('US')">Continue to PayPal - $19</a>
+</div>
+</div>
+</div>
+
+<a class="float" href="https://wa.me/15551436700?text=Hi%20HowzitBot%20I%20want%2050%20free%20credits">💬</a>
+
+<script>
+function goPay(country){
+  var email = document.getElementById(country=='ZA'?'emailZA':'emailUS').value;
+  var biz = document.getElementById(country=='ZA'?'bizZA':'bizUS').value;
+  if
