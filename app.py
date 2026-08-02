@@ -10,7 +10,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+from flask import send_from_directory
 
+@app.route('/')
+def homepage():
+    return send_from_directory('.', 'index.html')
 # Load Environment Variables (Set these in Render)
 VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN")
 WHATSAPP_TOKEN = os.environ.get("WHATSAPP_TOKEN")
