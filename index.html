@@ -10,58 +10,32 @@ body{background:#0a0f0a;color:#e5ffe5;font-family:Inter,system-ui,sans-serif;lin
 .container{max-width:1100px;margin:0 auto;padding:0 20px}
 nav{display:flex;justify-content:space-between;align-items:center;padding:20px 0;border-bottom:1px solid #1a2e1a}
 .logo{font-size:22px;font-weight:800;color:#22c55e} .logo span{color:#fff}
-.hero{padding:80px 0 60px;text-align:center}
-.hero h1{font-size:48px;line-height:1.1;margin-bottom:16px} .hero h1 span{color:#22c55e}
-.hero p{font-size:18px;color:#a3d9a3;max-width:650px;margin:0 auto 32px}
+.hero{padding:60px 0 40px;text-align:center}
+.hero h1{font-size:42px;line-height:1.1;margin-bottom:16px} .hero h1 span{color:#22c55e}
+.hero p{font-size:17px;color:#a3d9a3;max-width:650px;margin:0 auto 30px}
 .badge{display:inline-block;background:#132813;border:1px solid #22c55e;color:#22c55e;padding:6px 14px;border-radius:20px;font-size:13px;margin-bottom:20px}
-.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin:50px 0}
-.card{background:#111e11;border:1px solid #1e3a1e;border-radius:12px;padding:24px}
-.card h3{color:#fff;margin-bottom:8px} .card p{color:#8abf8a;font-size:14px}
-.pricing{background:#111e11;border:2px solid #22c55e;border-radius:16px;padding:32px;text-align:center;max-width:420px;margin:60px auto}
-.price{font-size:48px;font-weight:900;color:#22c55e;margin:10px 0} .price small{font-size:16px;color:#8abf8a}
-.form{background:#0f1f0f;border-radius:12px;padding:20px;margin-top:20px;text-align:left}
-.form input{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #2a4a2a;background:#0a140a;color:#fff}
-.paypal-wrap{margin-top:16px}
-.footer{text-align:center;padding:40px 0;color:#5a7a5a;font-size:13px;border-top:1px solid #1a2e1a;margin-top:60px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin:40px 0}
+.card{background:#111e11;border:1px solid #1e3a1e;border-radius:12px;padding:20px}
+.card h3{color:#fff;margin-bottom:6px;font-size:16px} .card p{color:#8abf8a;font-size:13px}
+.pricing{background:#111e11;border:2px solid #22c55e;border-radius:16px;padding:28px;text-align:center;max-width:430px;margin:50px auto}
+.price{font-size:52px;font-weight:900;color:#22c55e;margin:8px 0} .price small{font-size:16px;color:#8abf8a}
+.form{background:#0f1f0f;border-radius:12px;padding:20px;margin-top:18px;text-align:left}
+.form input{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:1px solid #2a4a2a;background:#0a140a;color:#fff;font-size:15px}
+.btn-save{width:100%;padding:14px;background:#22c55e;color:#000;font-weight:800;border:none;border-radius:8px;margin-top:12px;cursor:pointer;font-size:15px}
+.btn-save:hover{background:#16a34a}
+.paypal-wrap{margin-top:20px;background:#fff;border-radius:8px;padding:10px}
+.footer{text-align:center;padding:30px 0;color:#5a7a5a;font-size:12px;border-top:1px solid #1a2e1a;margin-top:50px}
 .tick{color:#22c55e}
 </style>
 </head>
 <body>
 <div class="container">
-<nav><div class="logo">Howzit<span>Bot</span></div><div style="color:#8abf8a;font-size:13px">Bot: +1 (555) 143-6700</div></nav>
+<nav><div class="logo">Howzit<span>Bot</span></div><div style="color:#8abf8a;font-size:12px">Bot: +1 (555) 143-6700</div></nav>
+
 <div class="hero">
-<div class="badge">✅ 50 FREE credits - No card required</div>
-<h1>Tired of answering the<br><span>same WhatsApps?</span></h1>
-<p>HowzitBot trains on YOUR business and answers customers automatically on WhatsApp. Your AI staff, 24/7.</p>
+<div class="badge">✅ 50 FREE credits included</div>
+<h1>Tired of answering<br><span>same WhatsApps?</span></h1>
+<p>HowzitBot trains on YOUR business and answers customers automatically on WhatsApp. 24/7 AI staff.</p>
+
 <div class="grid3">
-<div class="card"><h3>🤖 Auto Answers</h3><p>Answers prices, hours, menu from YOUR knowledge base. No more "how much?" at 11pm.</p></div>
-<div class="card"><h3>📚 Learns Your Business</h3><p>Upload menu, price list, FAQs. Bot learns in 2 mins.</p></div>
-<div class="card"><h3>💰 Closes Sales</h3><p>Takes orders, qualifies leads, books appointments while you sleep.</p></div>
-</div>
-<div class="pricing">
-<h2>Get HowzitBot</h2>
-<div class="price">R299<small>/mo</small></div>
-<p style="color:#a3d9a3;font-size:14px">✓ Unlimited chats<br>✓ 50 free credits<br>✓ Cancel anytime</p>
-<div class="form">
-<label style="font-size:13px;color:#a3d9a3">Your Email</label>
-<input id="email" type="email" placeholder="you@business.co.za" required>
-<label style="font-size:13px;color:#a3d9a3">Business Name</label>
-<input id="business" type="text" placeholder="e.g. Joes Pizza">
-<div id="msg" style="margin-top:12px;font-size:13px;color:#22c55e"></div>
-<div class="paypal-wrap">
-<div id="paypal-container-LTV4LXMMA2Z5L"></div>
-</div>
-</div>
-<p style="font-size:12px;color:#5a7a5a;margin-top:12px">Secure by PayPal • R299/month</p>
-</div>
-<div style="margin-top:40px;color:#8abf8a;text-align:center">1. Pay R299 → 2. We email activation → 3. You upload menu → 4. Bot sells for you</div>
-<div class="footer">© 2026 HowzitBot • SA Businesses • charltommie18@gmail.com</div>
-</div>
-</div>
-<script src="https://www.paypal.com/sdk/js?client-id=BAAMUCZoGoQtgzsrOs_MeDDE9u7DyRzYfKWtgHNfYi-EWGcm-m0jVRKzRQCym9n4cngYCkVGbObhtfQj1k&components=hosted-buttons&disable-funding=venmo&currency=USD"></script>
-<script>
-function saveLead(){
-  const email=document.getElementById('email').value;
-  const business=document.getElementById('business').value;
-  if(!email||!business){document.getElementById('msg').innerText='Fill email + business first!';return false;}
-  fetch('/api/lead',{
+<div class
