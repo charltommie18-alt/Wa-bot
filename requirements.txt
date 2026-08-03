@@ -1,5 +1,4 @@
+gunicorn
 Flask
 flask-cors
 requests
-supabase
-openai
