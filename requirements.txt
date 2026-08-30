@@ -1,8 +1,5 @@
-flask
-gunicorn
-requests
-httpx
-openai
-pandas
-streamlit
-python-dotenv
+flask==2.3.3
+gunicorn==21.2.0
+requests==2.31.0
+httpx==0.25.0
+openai==1.12.0
