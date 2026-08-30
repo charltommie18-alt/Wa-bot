@@ -1,76 +1,74 @@
 import os
-from flask import Flask, request, jsonify, Response, send_from_directory
-import requests, httpx, openai
+from flask import Flask, request
+import requests
 
 app = Flask(__name__)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
-PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "bot123")
-
-headers = {
-    "apikey": SUPABASE_KEY,
-    "Authorization": f"Bearer {SUPABASE_KEY}",
-    "Content-Type": "application/json"
-}
+WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
+PHONE_ID = os.getenv("PHONE_ID")
+OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 
 @app.route("/")
 def home():
-    return send_from_directory(".", "index.html")
+    return "HowzitBot LIVE - AI powered"
 
-@app.route("/api/webhook", methods=["GET"])
-def verify():
-    if request.args.get("hub.mode")=="subscribe" and request.args.get("hub.verify_token")==VERIFY_TOKEN:
-        return Response(request.args.get("hub.challenge"), status=200, mimetype="text/plain")
-    return Response("Verification failed", status=403)
-
-@app.route("/api/webhook", methods=["POST"])
+@app.route("/api/webhook", methods=["GET", "POST"])
 def webhook():
-    data=request.get_json()
-    print("INCOMING:", data)
+    if request.method == "GET":
+        # For Meta verification
+        if request.args.get("hub.verify_token") == VERIFY_TOKEN:
+            return request.args.get("hub.challenge")
+        return "Wrong token", 403
+
+    # POST - incoming WhatsApp
+    data = request.json
     try:
-        value = data['entry'][0]['changes'][0]['value']
-        if 'messages' not in value:
-            return jsonify({"status":"ok"})
-        msg = value['messages'][0]
-        from_num = msg['from']
-        user_text = msg.get('text', {}).get('body', '')
-        if not user_text:
-            return jsonify({"status":"ok"})
+        entry = data["entry"][0]["changes"][0]["value"]
+        if "messages" in entry:
+            msg = entry["messages"][0]
+            from_num = msg["from"]
+            text = msg["text"]["body"]
 
-        answer = None
-        try:
-            r = httpx.get(f"{SUPABASE_URL}/rest/v1/training_data", params={"select":"answer","question":f"ilike.*{user_text}*","limit":"1"}, headers=headers, timeout=10)
-            if r.status_code==200 and r.json():
-                answer = r.json()[0]['answer']
-        except Exception as e:
-            print("Supabase search error:", e)
+            # AI SMART REPLY - minimal code
+            ai_reply = get_ai_reply(text)
 
-        if not answer:
-            try:
-                r = httpx.get(f"{SUPABASE_URL}/rest/v1/training_data", params={"select":"question,answer","limit":"20"}, headers=headers, timeout=10)
-                training = r.json() if r.status_code==200 else []
-                context = "\n".join([f"Q: {x['question']}\nA: {x['answer']}" for x in training])
-                prompt = f"You are HowzitBot SA business staff. Training:\n{context}\n\nCustomer: {user_text}\nReply friendly SA English:"
-                client = openai.OpenAI(api_key=OPENAI_API_KEY)
-                resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user","content":prompt}])
-                answer = resp.choices[0].message.content
-            except Exception as e:
-                print("OpenAI error:", e)
-                answer = "Howzit! I'm offline now, try again just now."
-
-        url = f"https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages"
-        wa_headers = {"Authorization": f"Bearer {WHATSAPP_TOKEN}", "Content-Type":"application/json"}
-        payload = {"messaging_product":"whatsapp","to":from_num,"type":"text","text":{"body":answer[:4000]}}
-        resp = requests.post(url, json=payload, headers=wa_headers)
-        print("WA SEND:", resp.status_code, resp.text)
-
+            send_whatsapp(from_num, ai_reply)
     except Exception as e:
-        print("WEBHOOK ERROR:", e)
-    return jsonify({"status":"ok"})
+        print(f"Error: {e}")
+    return "OK", 200
 
-if __name__=="__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT",10000)))
+def get_ai_reply(user_text):
+    # If no OpenAI key, use simple smart reply
+    if not OPENAI_KEY:
+        return f"Howzit! You said: {user_text}. I'm your AI assistant for Oudtshoorn - how can I help?"
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=OPENAI_KEY)
+        res = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are HowzitBot, a helpful assistant for a South African business in Oudtshoorn. Be friendly, short, use Afrikaans slang like 'Howzit', 'Lekker'."},
+                {"role": "user", "content": user_text}
+            ]
+        )
+        return res.choices[0].message.content
+    except:
+        return "Sorry, AI is sleeping. Try again!"
+
+def send_whatsapp(to, text):
+    if not WHATSAPP_TOKEN or not PHONE_ID:
+        return
+    url = f"https://graph.facebook.com/v20.0/{PHONE_ID}/messages"
+    headers = {"Authorization": f"Bearer {WHATSAPP_TOKEN}"}
+    data = {
+        "messaging_product": "whatsapp",
+        "to": to,
+        "type": "text",
+        "text": {"body": text}
+    }
+    requests.post(url, json=data, headers=headers)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
