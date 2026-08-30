@@ -1,31 +1,25 @@
-
 import os
 from flask import Flask, request, jsonify, Response, send_from_directory
-import requests
+import requests, httpx, openai
 
 app = Flask(__name__)
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
 PHONE_NUMBER_ID = os.getenv("PHONE_NUMBER_ID")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "bot123")
 
+headers = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": f"Bearer {SUPABASE_KEY}",
+    "Content-Type": "application/json"
+}
+
 @app.route("/")
 def home():
-    # Serve your index.html file
-    if os.path.exists("index.html"):
-        return send_from_directory(".", "index.html")
-    return "<h1>HowzitBot Live - Upload index.html</h1>"
-
-@app.route("/hero.mp4")
-def hero():
-    if os.path.exists("hero.mp4"):
-        return send_from_directory(".", "hero.mp4")
-    if os.path.exists(".devcontainer/hero.mp4"):
-        return send_from_directory(".devcontainer", "hero.mp4")
-    return Response(status=302, headers={"Location":"https://cdn.coverr.co/videos/coverr-a-man-using-his-phone-in-an-office-1578/1080p.mp4"})
+    return send_from_directory(".", "index.html") if os.path.exists("index.html") else "<h1>HowzitBot Live</h1>"
 
 @app.route("/api/webhook", methods=["GET"])
 def verify():
@@ -36,7 +30,47 @@ def verify():
 @app.route("/api/webhook", methods=["POST"])
 def webhook():
     data=request.get_json()
-    print(data)
+    print("INCOMING:", data)
+    try:
+        entry = data['entry'][0]['changes'][0]['value']
+        if 'messages' in entry:
+            msg = entry['messages'][0]
+            from_num = msg['from']
+            user_text = msg.get('text', {}).get('body', '')
+
+            if not user_text:
+                return jsonify({"status":"ok"})
+
+            # 1. Try Supabase exact match first (free)
+            answer = None
+            try:
+                r = httpx.get(f"{SUPABASE_URL}/rest/v1/training_data?select=answer&question=ilike.*{user_text}*&limit=1", headers=headers, timeout=10)
+                if r.status_code==200 and r.json():
+                    answer = r.json()[0]['answer']
+            except: pass
+
+            # 2. Fallback to OpenAI with your training data
+            if not answer:
+                try:
+                    r = httpx.get(f"{SUPABASE_URL}/rest/v1/training_data?select=question,answer&limit=20", headers=headers, timeout=10)
+                    training = r.json()
+                    context = "\n".join([f"Q: {x['question']}\nA: {x['answer']}" for x in training])
+                    prompt = f"You are HowzitBot for Cape Town businesses. Use training data:\n{context}\n\nCustomer: {user_text}\nReply in friendly SA English:"
+                    client = openai.OpenAI(api_key=OPENAI_API_KEY)
+                    resp = client.chat.completions.create(model="gpt-4o-mini", messages=[{"role":"user","content":prompt}])
+                    answer = resp.choices[0].message.content
+                except Exception as e:
+                    answer = f"Howzit! I'm having a glitch: {e}"
+
+            # 3. Send back via WhatsApp Cloud API - FREE inside 24h window
+            url = f"https://graph.facebook.com/v20.0/{PHONE_NUMBER_ID}/messages"
+            wa_headers = {"Authorization": f"Bearer {WHATSAPP_TOKEN}", "Content-Type":"application/json"}
+            payload = {"messaging_product":"whatsapp","to":from_num,"type":"text","text":{"body":answer}}
+            requests.post(url, json=payload, headers=wa_headers)
+
+    except Exception as e:
+        print("WEBHOOK ERROR:", e)
+
     return jsonify({"status":"ok"})
 
 if __name__=="__main__":
