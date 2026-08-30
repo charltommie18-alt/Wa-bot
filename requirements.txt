@@ -1,6 +1,7 @@
+flask
 gunicorn
-Flask
-flask-cors
 requests
-supabase
+httpx
 openai
+pandas
+streamlit
