@@ -24,14 +24,11 @@ try:
         st.success(f"✅ Connected to Supabase! Key length {len(SUPABASE_KEY)} works!")
     else:
         st.error(f"❌ Supabase returned {r.status_code}: {r.text}")
-        st.info(f"URL: {SUPABASE_URL}")
-        st.info(f"KEY: {SUPABASE_KEY[:20]}... length {len(SUPABASE_KEY)}")
         st.stop()
 except Exception as e:
     st.error(f"❌ Connection failed: {e}")
     st.stop()
 
-# --- Tabs ---
 tab1, tab2, tab3 = st.tabs(["📚 View Data", "➕ Add Data", "🧪 Test AI"])
 
 with tab1:
