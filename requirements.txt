@@ -5,3 +5,4 @@ httpx
 openai
 pandas
 streamlit
+python-dotenv
