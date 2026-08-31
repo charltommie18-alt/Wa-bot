@@ -1,5 +1,6 @@
 import os
 import requests
+from datetime import datetime
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -9,9 +10,34 @@ WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
 PHONE_ID = os.getenv("PHONE_ID")
 GROQ_KEY = os.getenv("GROQ_API_KEY")
 
+# === EMAILJS - AUTO EMAIL TO YOU ===
+EMAILJS_SERVICE_ID = "service_r58xvdz"
+EMAILJS_TEMPLATE_ID = "template_bp7wufo"
+EMAILJS_PUBLIC_KEY = "2lEmbRRtEMVwbX5SU"
+
+def send_auto_email(phone, customer_message, bot_reply):
+    try:
+        url = "https://api.emailjs.com/api/v1.0/email/send"
+        data = {
+            "service_id": EMAILJS_SERVICE_ID,
+            "template_id": EMAILJS_TEMPLATE_ID,
+            "user_id": EMAILJS_PUBLIC_KEY,
+            "template_params": {
+                "phone": phone,
+                "message": customer_message,
+                "bot_reply": bot_reply,
+                "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S SA")
+            }
+        }
+        r = requests.post(url, json=data, timeout=10)
+        print(f"✅ EmailJS: {r.status_code} - {r.text}")
+    except Exception as e:
+        print(f"❌ Email failed: {e}")
+# === END EMAILJS ===
+
 @app.route("/")
 def home():
-    return "HowzitBot FREE AI LIVE - 100% Free"
+    return "HowzitBot FREE AI LIVE - 100% Free + Auto Email"
 
 @app.route("/api/webhook", methods=["GET", "POST"])
 def webhook():
@@ -33,6 +59,10 @@ def webhook():
 
             ai_text = get_free_ai(user_text)
             send_whatsapp(from_number, ai_text)
+
+            # AUTO EMAIL YOU INSTANTLY
+            send_auto_email(from_number, user_text, ai_text)
+
     except Exception as e:
         print(f"Error: {e}")
     return "OK", 200
