@@ -32,22 +32,29 @@ def webhook():
         from_number = msg['from']
         text = msg['text']['body']
 
-        # Groq AI
+        # Groq FREE AI
         groq_res = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
             headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-            json={"model": "llama-3.1-8b-instant", "messages": [{"role": "user", "content": text}]}
+            json={
+                "model": "llama-3.1-8b-instant",
+                "messages": [{"role": "user", "content": text}]
+            }
         )
         reply = groq_res.json()['choices'][0]['message']['content']
 
-        # Send WhatsApp
+        # Send WhatsApp reply
         requests.post(
             f"https://graph.facebook.com/v20.0/{PHONE_ID}/messages",
             headers={"Authorization": f"Bearer {WHATSAPP_TOKEN}", "Content-Type": "application/json"},
-            json={"messaging_product": "whatsapp", "to": from_number, "text": {"body": reply}}
+            json={
+                "messaging_product": "whatsapp",
+                "to": from_number,
+                "text": {"body": reply}
+            }
         )
 
-        # FIXED EmailJS - CORRECT IDS NOW
+        # EmailJS - FIXED IDS + TO EMAIL FROM CODE
         requests.post(
             "https://api.emailjs.com/api/v1.0/email/send",
             headers={"Content-Type": "application/json"},
@@ -56,15 +63,19 @@ def webhook():
                 "template_id": "template_fsp6946",
                 "user_id": "wro1MTGjT1a2eQy7t",
                 "template_params": {
+                    "to_email": "charltommie18@gmail.com",
                     "phone": from_number,
                     "message": text,
-                    "bot_reply": reply
+                    "bot_reply": reply,
+                    "name": "WhatsApp Lead",
+                    "time": "now"
                 }
             }
         )
         return "OK", 200
+
     except Exception as e:
-        print(e)
+        print(f"Error: {e}")
         return "OK", 200
 
 if __name__ == "__main__":
