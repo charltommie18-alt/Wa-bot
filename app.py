@@ -14,7 +14,7 @@ def home():
 
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
-    # STEP 1 - Facebook verification (THIS FIXES YOUR ERROR)
+    # STEP 1 - Facebook verification
     if request.method == "GET":
         mode = request.args.get("hub.mode")
         token = request.args.get("hub.verify_token")
@@ -49,13 +49,13 @@ def webhook():
             json={"messaging_product": "whatsapp", "to": from_number, "text": {"body": reply}}
         )
 
-        # FREE Auto Email via EmailJS
+        # FREE Auto Email via EmailJS - FIXED IDS
         requests.post(
             "https://api.emailjs.com/api/v1.0/email/send",
             headers={"Content-Type": "application/json"},
             json={
-                "service_id": "service_vdofn4t",
-                "template_id": "template_hzcxj6e",
+                "service_id": "service_34e6hy6",
+                "template_id": "template_fsp6946",
                 "user_id": "wro1MTGjT1a2eQy7t",
                 "template_params": {
                     "phone": from_number,
