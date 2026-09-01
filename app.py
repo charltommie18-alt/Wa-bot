@@ -10,7 +10,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 @app.route("/")
 def home():
-    return "HowzitBot FREE AI LIVE - 100% Free + Auto Email", 200
+    return "HowzitBot FREE AI LIVE - Fixed", 200
 
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
@@ -43,7 +43,7 @@ def webhook():
         )
         reply = groq_res.json()['choices'][0]['message']['content']
 
-        # Send WhatsApp reply
+        # WhatsApp reply FIRST
         requests.post(
             f"https://graph.facebook.com/v20.0/{PHONE_ID}/messages",
             headers={"Authorization": f"Bearer {WHATSAPP_TOKEN}", "Content-Type": "application/json"},
@@ -54,21 +54,20 @@ def webhook():
             }
         )
 
-        # EmailJS - FIXED IDS + TO EMAIL FROM CODE
+        # EmailJS - NEW IDs - FIXED To Email
         requests.post(
             "https://api.emailjs.com/api/v1.0/email/send",
             headers={"Content-Type": "application/json"},
             json={
                 "service_id": "service_m3wpi6m",
-                "template_id": "template_fsp6946",
+                "template_id": "template_j9t9z9r",
                 "user_id": "wro1MTGjT1a2eQy7t",
                 "template_params": {
-                    "to_email": "charltommie18@gmail.com",
                     "phone": from_number,
-                    "message": text,
-                    "bot_reply": reply,
                     "name": "WhatsApp Lead",
-                    "time": "now"
+                    "time": "now",
+                    "message": text,
+                    "bot_reply": reply
                 }
             }
         )
